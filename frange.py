@@ -1,5 +1,5 @@
 """
-File: minusten.py
+File: frange.py
 By Peter Caven, peter@sparseinference.com
 
 Description:
@@ -15,19 +15,19 @@ from numpy import *
 from sss import Optimize
 
 
-def MinusTen(x):
+def Frange(x):
     """
-    Optimal value is 0.0 at [10, 10, ... 10]
+    Optimal value is 0.0 at arange(1,len(x)+1)
     """
-    return sum((10.0 - x)**2)
+    return sum((arange(1,len(x)+1) - x)**2)
 
 
 
 
-optimum = Optimize( MinusTen, 
+optimum = Optimize( Frange, 
                     dimensions      = 100,
-                    lowerDomain     = -15.0,
-                    upperDomain     = 15.0,
+                    lowerDomain     = -110.0,
+                    upperDomain     = 110.0,
                     maxMutations    = 2,
                     maxIndexes      = 2,
                     gamma           = 0.99,

@@ -176,7 +176,7 @@ def Optimize(fun,
     currentIndex = pop.eliteIndex
     loss = pop.elite.loss
     startTime = time.time()
-    print(f"[{0:6d}] Loss:{loss:>20.10f}  S:{pop.scale:>10.8f}  EF:{pop.eliteFraction:>10.8f}")
+    print(f"[{0:7d}] Loss:{loss:>20.10f}  S:{pop.scale:<12.6g}  EF:{pop.eliteFraction:>5.3f}  elapsed: {0.0:>9.6f} hours")
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
@@ -184,19 +184,19 @@ def Optimize(fun,
             rep = pop.elite.rep
             loss = pop.elite.loss
             elapsedTime = (time.time() - startTime)/(60*60)
-            if loss < 1.0e-8:
+            if (loss < 1.0e-8) or (pop.scale < 1.0e-10):
                 break
             elif currentIndex != pop.eliteIndex:
                 currentIndex = pop.eliteIndex
-                print(f"[{trial:6d}] Loss:{loss:>20.10f}  S:{pop.scale:>10.8f}  EF:{pop.eliteFraction:>10.8f}  elapsed: {elapsedTime:>9.6f} hours")
+                print(f"[{trial:7d}] Loss:{loss:>20.10f}  S:{pop.scale:<12.6g}  EF:{pop.eliteFraction:>5.3f}  elapsed: {elapsedTime:>9.6f} hours")
         #-----------------------------------------------------------------
     except KeyboardInterrupt:
         pass
     finally:
-        print(f"\n[{trial:6d}]")
+        print(f"\n[{trial:7d}]")
         print(f"Loss = {pop.elite.loss:.10f}")
         print(f"Diversity Loss = {pop.diversity.loss:.10f}")
-        print(f"Scale = {pop.scale:.8f}")
+        print(f"Scale = {pop.scale:.8g}")
         print(f"Solution:\n{pop.elite.rep}")
     return pop.elite
 

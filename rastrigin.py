@@ -29,7 +29,6 @@ optimum = Optimize( Rastrigin,
                     maxMutations    = 2,
                     maxIndexes      = 2,
                     gamma           = 0.9999,
-                    eliteFraction   = 0.5,
                     minImprovements = 3,
                     popSize         = 20,
                     maxIterations   = 1000000)

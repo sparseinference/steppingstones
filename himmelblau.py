@@ -21,6 +21,16 @@ def Himmelblau(x):
     return (x[0]**2 + x[1] - 11.0)**2 + (x[0] + x[1]**2 - 7.0)**2
 
 
+"""
+Minima = 0.0 at:
+
+ 3.000000, 2.000000
+-2.805118, 3.131312
+-3.779310,-3.283186
+ 3.584428,-1.848126
+
+"""
+
 
 
 optimum = Optimize( Himmelblau, 
@@ -30,8 +40,8 @@ optimum = Optimize( Himmelblau,
                     maxMutations    = 1,
                     maxIndexes      = 1,
                     gamma           = 0.99,
-                    eliteFraction   = 0.5,
                     minImprovements = 3,
                     popSize         = 20,
-                    maxIterations   = 1000000)
+                    maxIterations   = 1000000,
+                    targetLoss      = 1.0e-9)
 

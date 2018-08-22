@@ -30,10 +30,9 @@ optimum = Optimize( HappyCat,
                     lowerDomain     = -2.0,
                     upperDomain     = 2.0,
                     maxMutations    = 2,
-                    maxIndexes      = 3,
+                    maxIndexes      = 2,
                     gamma           = 0.9999,
-                    eliteFraction   = 0.5,
-                    minImprovements = 3,
-                    popSize         = 30,
+                    minImprovements = 2,
+                    popSize         = 50,
                     maxIterations   = 1000000)
 

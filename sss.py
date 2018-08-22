@@ -6,7 +6,6 @@ Description:
 
 The Stepping Stone Search Algorithm.
 
-
 """
 
 import numpy
@@ -31,22 +30,15 @@ class Member():
         self.rep = uniform(low=lowerDomain, high=upperDomain, size=length)
         self.loss = None
     #-----------------------------------------------
-    def mutate(self, maxMutations, scale, mutator=standard_cauchy):
+    def copyAndModify(self, maxMutations, scale, source, maxIndexes):
+        """
+        The search operator:
+        - copy and mutate this member.
+        - copy values from the source at random indexes.
+        """
         x = self.rep.copy()
         mutableIndexes = sample(range(len(x)), maxMutations)
-        x[mutableIndexes] += mutator() * scale
-        return x
-    #-----------------------------------------------
-    def randomCopy(self, source, maxIndexes):
-        x = self.rep.copy()
-        copyIndexes = sample(range(len(x)), maxIndexes)
-        x[copyIndexes] = source.rep[copyIndexes]
-        return x
-    #-----------------------------------------------
-    def mutateAndCopy(self, maxMutations, scale, source, maxIndexes, mutator=standard_cauchy):
-        x = self.rep.copy()
-        mutableIndexes = sample(range(len(x)), maxMutations)
-        x[mutableIndexes] += mutator() * scale
+        x[mutableIndexes] += standard_cauchy() * scale
         copyIndexes = sample(range(len(x)), maxIndexes)
         x[copyIndexes] = source.rep[copyIndexes]
         return x
@@ -59,10 +51,16 @@ class Member():
 
 
 class Population():
-    def __init__(self, popSize, memberLength, 
-                    lowerDomain, upperDomain,
-                    maxMutations, maxIndexes, 
-                    gamma, eliteFraction, minImprovements, evaluate):
+    def __init__(self, 
+                popSize, 
+                memberLength, 
+                lowerDomain, 
+                upperDomain,
+                maxMutations, 
+                maxIndexes, 
+                gamma, 
+                minImprovements, 
+                evaluate):
         self.population = []
         self.eliteLoss = None
         self.eliteIndex = None
@@ -74,10 +72,10 @@ class Population():
         self.maxMutations = maxMutations
         self.maxIndexes = maxIndexes
         self.gamma = gamma
-        self.eliteFraction = eliteFraction
         self.scale = 1.0
         self.minImprovements = minImprovements
         self.evaluate = evaluate
+        self.improvements = array([0,0,0])
         #------------------------------------------------
         for i in range(popSize):
             member = Member(memberLength, self.lowerDomain, self.upperDomain)
@@ -98,58 +96,51 @@ class Population():
     def diversity(self):
         return self.population[self.diversityIndex]
     #-----------------------------------------------
-    def updateDiversity(self):
-        """
-        Update the source of diversity in the population.
-        """
-        rep = uniform(low=self.lowerDomain, high=self.upperDomain, size=self.memberLength)
-        copyIndexes = sample(range(self.memberLength), int(self.eliteFraction * self.memberLength))
-        rep[copyIndexes] = self.elite.rep[copyIndexes]
-        loss = self.evaluate(rep)
-        self.diversity.update(rep, loss)
-    #-----------------------------------------------
     def search(self, constrainToDomain=False):
         """
         One iteration of the Stepping Stone Search algorithm.
         """
-        improved = 0
-        self.updateDiversity()
+        improved = array([0,0,0])
         #------------------------------------------------
         for index, member in enumerate(self.population):
             #------------------------------------------------
             source = self.population[randrange(len(self.population))]
-            x = member.mutateAndCopy(self.maxMutations, self.scale, source, self.maxIndexes)
+            x = member.copyAndModify(self.maxMutations, self.scale, source, self.maxIndexes)
             if constrainToDomain:
                 x = minimum(self.upperDomain, maximum(self.lowerDomain, x))
             #------------------------------------------------
             loss = self.evaluate(x)
             #------------------------------------------------
+            if index == self.diversityIndex:
+                self.diversity.update(x, loss)
+                self.diversityLoss = loss
+            #------------------------------------------------
             if loss < self.eliteLoss:
                 member.update(x, loss)
                 self.eliteIndex = index
                 self.eliteLoss = loss
-                improved += 1
+                improved[0] += 1
             else:
                 slot = randrange(len(self.population))
                 slotMember = self.population[slot]
-                #if (slot != self.eliteIndex) and (loss <= slotMember.loss):
-                if (slot != self.eliteIndex)and (slot != self.diversityIndex) and (loss <= slotMember.loss):
+                if (slot != self.diversityIndex) and (loss <= slotMember.loss):
                     # --------------------------------------------------
                     slotMember.update(x, loss)
-                    improved += 1
+                    improved[1] += 1
                     # --------------------------------------------------
-                #elif (index != self.eliteIndex) and (loss <= member.loss):
-                elif (index != self.eliteIndex)and (index != self.diversityIndex) and (loss <= member.loss):
+                elif (index != self.diversityIndex) and (loss <= member.loss):
                     # --------------------------------------------------
                     member.update(x, loss)
-                    improved += 1
+                    improved[2] += 1
                     # --------------------------------------------------
             #------------------------------------------------
         # --------------------------------------------------
-        # scale the mutator with a smaller scale factor if there were not
-        # at least 'self.minImprovements' improved members in the population.
-        if improved < self.minImprovements:
+        # reduce the scale if there were less than 'self.minImprovements' 
+        # improved members in the population.
+        if sum(improved) < self.minImprovements:
             self.scale *= self.gamma
+        # --------------------------------------------------
+        self.improvements += improved
 
 
 
@@ -162,7 +153,6 @@ def Optimize(fun,
             maxMutations        = 3, 
             maxIndexes          = 3, 
             gamma               = 0.99, 
-            eliteFraction       = 0.5, 
             minImprovements     = 3, 
             popSize             = 10, 
             maxIterations       = 1000000,
@@ -173,11 +163,11 @@ def Optimize(fun,
     pop = Population(popSize, dimensions, 
                         lowerDomain, upperDomain, 
                         maxMutations, maxIndexes, 
-                        gamma, eliteFraction, minImprovements, fun)
+                        gamma, minImprovements, fun)
     currentIndex = pop.eliteIndex
     loss = pop.elite.loss
     startTime = time.time()
-    print(f"[{0:7d}] Loss: {loss:<20.8g}  S: {pop.scale:<12.6g}  EF: {pop.eliteFraction:>5.3f}  elapsed: {0.0:>9.6f} hours")
+    print(f"[{0:7d}] Loss: {loss:<12.6g}  S: {pop.scale:<12.6g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
@@ -189,17 +179,27 @@ def Optimize(fun,
                 break
             elif currentIndex != pop.eliteIndex:
                 currentIndex = pop.eliteIndex
-                print(f"[{trial:7d}] Loss: {loss:<20.8g}  S: {pop.scale:<12.6g}  EF: {pop.eliteFraction:>5.3f}  elapsed: {elapsedTime:>9.6f} hours")
+                print(f"[{trial:7d}] Loss: {loss:<12.6g}  S: {pop.scale:<12.6g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
         #-----------------------------------------------------------------
     except KeyboardInterrupt:
         pass
     finally:
         print(f"\n[{trial:7d}]")
-        print(f"Loss = {pop.elite.loss:.8g}")
-        print(f"Diversity Loss = {pop.diversity.loss:.10f}")
-        print(f"Scale = {pop.scale:.8g}")
+        print(f"Loss         = {pop.elite.loss:.8g}")
+        print(f"Scale        = {pop.scale:.8g}")
+        print(f"Improvements:{PI(pop.improvements)}")
         print(f"Solution:\n{pop.elite.rep}")
     return pop.elite
 
 
+def PI(improvements):
+    """
+    Format a string of percent improvements.
+    """
+    Z = sum(improvements)
+    if Z == 0:
+        return f"[{0.0:6.2f},{0.0:6.2f},{0.0:6.2f}]"
+    z = improvements/Z
+    return "[" + ",".join(f"{x*100.0:6.2f}" for x in z) + "]"
+    
 

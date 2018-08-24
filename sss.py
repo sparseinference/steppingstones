@@ -37,9 +37,9 @@ class Member():
         - copy values from the source at random indexes.
         """
         x = self.rep.copy()
-        mutableIndexes = sample(range(len(x)), maxMutations)
+        mutableIndexes = sample(range(len(x)), randrange(maxMutations+1))
         x[mutableIndexes] += standard_cauchy() * scale
-        copyIndexes = sample(range(len(x)), maxIndexes)
+        copyIndexes = sample(range(len(x)), randrange(maxIndexes+1))
         x[copyIndexes] = source.rep[copyIndexes]
         return x
     #-----------------------------------------------
@@ -156,7 +156,8 @@ def Optimize(fun,
             minImprovements     = 3, 
             popSize             = 10, 
             maxIterations       = 1000000,
-            targetLoss          = 1.0e-8):
+            targetLoss          = 1.0e-8,
+            minScale            = 1.0e-10):
     """
     Search for a minimizer of 'fun'.
     """
@@ -167,7 +168,7 @@ def Optimize(fun,
     currentIndex = pop.eliteIndex
     loss = pop.elite.loss
     startTime = time.time()
-    print(f"[{0:7d}] Loss: {loss:<12.6g}  S: {pop.scale:<12.6g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
+    print(f"[{0:7d}] Loss: {loss:<12.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
@@ -175,20 +176,16 @@ def Optimize(fun,
             rep = pop.elite.rep
             loss = pop.elite.loss
             elapsedTime = (time.time() - startTime)/(60*60)
-            if (loss < targetLoss) or (pop.scale < 1.0e-10):
+            if (loss < targetLoss) or (pop.scale < minScale):
                 break
             elif currentIndex != pop.eliteIndex:
                 currentIndex = pop.eliteIndex
-                print(f"[{trial:7d}] Loss: {loss:<12.6g}  S: {pop.scale:<12.6g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
+                print(f"[{trial:7d}] Loss: {loss:<12.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
         #-----------------------------------------------------------------
     except KeyboardInterrupt:
         pass
     finally:
-        print(f"\n[{trial:7d}]")
-        print(f"Loss         = {pop.elite.loss:.8g}")
-        print(f"Scale        = {pop.scale:.8g}")
-        print(f"Improvements:{PI(pop.improvements)}")
-        print(f"Solution:\n{pop.elite.rep}")
+        print(f"\n[{trial:7d}] Loss: {loss:<12.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
     return pop.elite
 
 

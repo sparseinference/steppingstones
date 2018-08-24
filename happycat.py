@@ -29,10 +29,12 @@ optimum = Optimize( HappyCat,
                     dimensions      = 10,
                     lowerDomain     = -2.0,
                     upperDomain     = 2.0,
-                    maxMutations    = 2,
-                    maxIndexes      = 2,
-                    gamma           = 0.9999,
+                    maxMutations    = 3,
+                    maxIndexes      = 1,
+                    gamma           = 0.99999,
                     minImprovements = 2,
-                    popSize         = 50,
-                    maxIterations   = 1000000)
+                    popSize         = 20,
+                    maxIterations   = 1000000,
+                    targetLoss      = 1.0e-5)
 
+print(f"\nSolution:\n{optimum.rep}")

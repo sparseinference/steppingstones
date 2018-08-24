@@ -36,5 +36,5 @@ optimum = Optimize( Regression,
                     maxIterations   = 1000000,
                     targetLoss      = 1.0e-9)
 
-
+print(f"Solution:\n{optimum.rep}")
 print(f"True solution:\n{dot(numpy.linalg.pinv(A),b)}")

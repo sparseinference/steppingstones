@@ -36,3 +36,4 @@ optimum = Optimize( MinusTen,
                     maxIterations   = 1000000,
                     targetLoss      = 1.0e-10)
 
+print(f"Solution:\n{optimum.rep}")

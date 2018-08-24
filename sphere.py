@@ -35,3 +35,4 @@ optimum = Optimize( Sphere,
                     maxIterations   = 1000000,
                     targetLoss      = 1.0e-15)
 
+print(f"Solution:\n{optimum.rep}")

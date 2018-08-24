@@ -45,3 +45,4 @@ optimum = Optimize( Himmelblau,
                     maxIterations   = 1000000,
                     targetLoss      = 1.0e-9)
 
+print(f"Solution:\n{optimum.rep}")

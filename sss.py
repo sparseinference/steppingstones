@@ -168,7 +168,7 @@ def Optimize(fun,
     currentIndex = pop.eliteIndex
     loss = pop.elite.loss
     startTime = time.time()
-    print(f"[{0:7d}] Loss: {loss:<12.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
+    print(f"[{0:7d}] Loss: {loss:<13.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
@@ -180,12 +180,12 @@ def Optimize(fun,
                 break
             elif currentIndex != pop.eliteIndex:
                 currentIndex = pop.eliteIndex
-                print(f"[{trial:7d}] Loss: {loss:<12.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
+                print(f"[{trial:7d}] Loss: {loss:<13.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
         #-----------------------------------------------------------------
     except KeyboardInterrupt:
         pass
     finally:
-        print(f"\n[{trial:7d}] Loss: {loss:<12.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
+        print(f"\n[{trial:7d}] Loss: {loss:<13.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
     return pop.elite
 
 

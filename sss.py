@@ -59,7 +59,8 @@ class Population():
                 maxMutations, 
                 maxIndexes, 
                 gamma, 
-                minImprovements, 
+                minImprovements,
+                scale,
                 evaluate):
         self.population = []
         self.eliteLoss = None
@@ -72,7 +73,7 @@ class Population():
         self.maxMutations = maxMutations
         self.maxIndexes = maxIndexes
         self.gamma = gamma
-        self.scale = 1.0
+        self.scale = scale
         self.minImprovements = minImprovements
         self.evaluate = evaluate
         self.improvements = array([0,0,0])
@@ -96,7 +97,7 @@ class Population():
     def diversity(self):
         return self.population[self.diversityIndex]
     #-----------------------------------------------
-    def search(self, constrainToDomain=False):
+    def search(self, constrainToLower=False, constrainToUpper=False):
         """
         One iteration of the Stepping Stone Search algorithm.
         """
@@ -106,8 +107,10 @@ class Population():
             #------------------------------------------------
             source = self.population[randrange(len(self.population))]
             x = member.copyAndModify(self.maxMutations, self.scale, source, self.maxIndexes)
-            if constrainToDomain:
-                x = minimum(self.upperDomain, maximum(self.lowerDomain, x))
+            if constrainToLower:
+                    x = maximum(self.lowerDomain, x)
+            if constrainToUpper:
+                    x = minimum(self.upperDomain, x)
             #------------------------------------------------
             loss = self.evaluate(x)
             #------------------------------------------------
@@ -149,11 +152,13 @@ def Optimize(fun,
             dimensions          = 1,
             lowerDomain         = -5.0,
             upperDomain         = 5.0,
-            constrainToDomain   = False,
+            constrainToLower    = False,
+            constrainToUpper    = False,
             maxMutations        = 3, 
             maxIndexes          = 3, 
             gamma               = 0.99, 
-            minImprovements     = 3, 
+            minImprovements     = 3,
+            scale               = 1.0,
             popSize             = 10, 
             maxIterations       = 1000000,
             targetLoss          = 1.0e-8,
@@ -164,7 +169,7 @@ def Optimize(fun,
     pop = Population(popSize, dimensions, 
                         lowerDomain, upperDomain, 
                         maxMutations, maxIndexes, 
-                        gamma, minImprovements, fun)
+                        gamma, minImprovements, scale, fun)
     currentIndex = pop.eliteIndex
     loss = pop.elite.loss
     startTime = time.time()
@@ -172,7 +177,7 @@ def Optimize(fun,
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
-            pop.search(constrainToDomain=constrainToDomain)
+            pop.search(constrainToLower=constrainToLower, constrainToUpper=constrainToUpper)
             rep = pop.elite.rep
             loss = pop.elite.loss
             elapsedTime = (time.time() - startTime)/(60*60)

@@ -148,6 +148,17 @@ class Population():
 
 
 
+def PI(improvements):
+    """
+    Format a string of percent improvements.
+    """
+    Z = sum(improvements)
+    if Z == 0:
+        return f"[{0.0:6.2f},{0.0:6.2f},{0.0:6.2f}]"
+    z = improvements/Z
+    return "[" + ",".join(f"{x*100.0:6.2f}" for x in z) + "]"
+
+
 def Optimize(fun, 
             dimensions          = 1,
             lowerDomain         = -5.0,
@@ -170,38 +181,25 @@ def Optimize(fun,
                         lowerDomain, upperDomain, 
                         maxMutations, maxIndexes, 
                         gamma, minImprovements, scale, fun)
-    currentIndex = pop.eliteIndex
     loss = pop.elite.loss
     startTime = time.time()
-    print(f"[{0:7d}] Loss: {loss:<13.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
+    print(f"[{0:7d}] Loss: {loss:<13.10g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
             pop.search(constrainToLower=constrainToLower, constrainToUpper=constrainToUpper)
-            rep = pop.elite.rep
-            loss = pop.elite.loss
-            elapsedTime = (time.time() - startTime)/(60*60)
-            if (loss < targetLoss) or (pop.scale < minScale):
-                break
-            elif currentIndex != pop.eliteIndex:
-                currentIndex = pop.eliteIndex
-                print(f"[{trial:7d}] Loss: {loss:<13.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
+            if loss > pop.elite.loss:
+                loss = pop.elite.loss
+                elapsedTime = (time.time() - startTime)/(60*60)
+                print(f"[{trial:7d}] Loss: {loss:<13.10g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
+                if (loss < targetLoss) or (pop.scale < minScale):
+                    break
         #-----------------------------------------------------------------
     except KeyboardInterrupt:
         pass
     finally:
-        print(f"\n[{trial:7d}] Loss: {loss:<13.8g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
+        print(f"\n[{trial:7d}] Loss: {pop.elite.loss:<13.10g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {elapsedTime:>9.6f} hours")
     return pop.elite
 
-
-def PI(improvements):
-    """
-    Format a string of percent improvements.
-    """
-    Z = sum(improvements)
-    if Z == 0:
-        return f"[{0.0:6.2f},{0.0:6.2f},{0.0:6.2f}]"
-    z = improvements/Z
-    return "[" + ",".join(f"{x*100.0:6.2f}" for x in z) + "]"
     
 

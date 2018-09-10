@@ -10,7 +10,6 @@ Linear regression test function for the Stepping Stone Search Algorithm.
 
 import numpy
 from numpy import *
-from random import sample,randrange
 
 from sss import Optimize
 

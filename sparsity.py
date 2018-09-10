@@ -23,7 +23,7 @@ x[sample(range(cols), nonZeroCount)] = 1.0
 b = dot(A,x)
 
 
-def Sparsity(x):
+def SparsityKnown(x):
     """
     Use this if we know the sparsity 
     of the elements of 'x'.
@@ -31,7 +31,7 @@ def Sparsity(x):
     y = dot(A,x) - b
     return dot(y,y) + abs(sum(x) - nonZeroCount)
 
-def SparsityZero(x):
+def SparsityUnknown(x):
     """
     Use this if we know nothing about the sparsity 
     or values in 'x'.
@@ -41,18 +41,20 @@ def SparsityZero(x):
 
 
 
-optimum = Optimize( Sparsity, 
+optimum = Optimize( SparsityKnown, 
                     dimensions        = cols,
                     lowerDomain       = 0.0,
-                    upperDomain       = 5.0,
-                    constrainToDomain = True,
-                    maxMutations      = 30,
-                    maxIndexes        = 5,
-                    gamma             = 0.9999,
+                    upperDomain       = 1.0,
+                    constrainToLower  = True,
+                    constrainToUpper  = True,
+                    maxMutations      = cols//4,
+                    maxIndexes        = cols//4,
+                    gamma             = 0.99999,
                     minImprovements   = 2,
+                    scale             = 2.0,
                     popSize           = 15,
                     maxIterations     = 1000000,
-                    targetLoss        = 1.0e-9)
+                    targetLoss        = 1.0e-6)
 
 print(f"\nFound Solution (sum(|x|)={sum(abs(optimum.rep))}):\n{optimum.rep}")
 print(f"\nTrue  Solution (sum(|x|)={sum(abs(x))}):\n{x}")

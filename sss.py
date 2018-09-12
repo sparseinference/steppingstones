@@ -26,8 +26,9 @@ class Member():
     Population member.
     """
     #-----------------------------------------------
-    def __init__(self, length, lowerDomain, upperDomain):
-        self.rep = uniform(low=lowerDomain, high=upperDomain, size=length)
+    def __init__(self, length, lowerDomain, upperDomain, dtype=float64):
+        self.rep = uniform(low=lowerDomain, high=upperDomain, size=length).astype(dtype)
+        # self.rep = maximum(lowerDomain, minimum(upperDomain, normal(size=length).astype(dtype)))
         self.loss = None
     #-----------------------------------------------
     def copyAndModify(self, maxMutations, scale, source, maxIndexes):
@@ -52,22 +53,22 @@ class Member():
 
 class Population():
     def __init__(self, 
-                popSize, 
-                memberLength, 
-                lowerDomain, 
-                upperDomain,
-                maxMutations, 
-                maxIndexes, 
-                gamma, 
-                minImprovements,
-                scale,
-                evaluate):
+                memberLength    = 10,
+                memberDataType  = numpy.float64, 
+                lowerDomain     = -1.0, 
+                upperDomain     =  1.0,
+                maxMutations    =  5, 
+                maxIndexes      =  5, 
+                gamma           = 0.99, 
+                minImprovements = 2,
+                scale           = 1.0):
         self.population = []
         self.eliteLoss = None
         self.eliteIndex = None
         self.diversityLoss = None
         self.diversityIndex = None
         self.memberLength = memberLength
+        self.memberDataType = memberDataType
         self.lowerDomain = lowerDomain
         self.upperDomain = upperDomain
         self.maxMutations = maxMutations
@@ -75,11 +76,14 @@ class Population():
         self.gamma = gamma
         self.scale = scale
         self.minImprovements = minImprovements
-        self.evaluate = evaluate
         self.improvements = array([0,0,0])
         #------------------------------------------------
+    def prepare(self, popSize, evaluate):
+        """
+        Initialize the population members and find the initial elite member.
+        """
         for i in range(popSize):
-            member = Member(memberLength, self.lowerDomain, self.upperDomain)
+            member = Member(self.memberLength, self.lowerDomain, self.upperDomain, self.memberDataType)
             member.loss = evaluate(member.rep)
             self.population.append(member)
             if (self.eliteLoss is None) or (self.eliteLoss > member.loss):
@@ -97,7 +101,7 @@ class Population():
     def diversity(self):
         return self.population[self.diversityIndex]
     #-----------------------------------------------
-    def search(self, constrainToLower=False, constrainToUpper=False):
+    def minimize(self, evaluate, constrainToLower=False, constrainToUpper=False):
         """
         One iteration of the Stepping Stone Search algorithm.
         """
@@ -112,7 +116,7 @@ class Population():
             if constrainToUpper:
                     x = minimum(self.upperDomain, x)
             #------------------------------------------------
-            loss = self.evaluate(x)
+            loss = evaluate(x)
             #------------------------------------------------
             if index == self.diversityIndex:
                 self.diversity.update(x, loss)
@@ -160,7 +164,8 @@ def PI(improvements):
 
 
 def Optimize(fun, 
-            dimensions          = 1,
+            dimensions          = 10,
+            dataType            = float64,
             lowerDomain         = -5.0,
             upperDomain         = 5.0,
             constrainToLower    = False,
@@ -177,17 +182,23 @@ def Optimize(fun,
     """
     Search for a minimizer of 'fun'.
     """
-    pop = Population(popSize, dimensions, 
-                        lowerDomain, upperDomain, 
-                        maxMutations, maxIndexes, 
-                        gamma, minImprovements, scale, fun)
+    pop = Population(   memberLength    = dimensions,
+                        memberDataType  = dataType,
+                        lowerDomain     = lowerDomain, 
+                        upperDomain     = upperDomain,
+                        maxMutations    = maxMutations, 
+                        maxIndexes      = maxIndexes, 
+                        gamma           = gamma, 
+                        minImprovements = minImprovements,
+                        scale           = scale)
+    pop.prepare(popSize, fun)
     loss = pop.elite.loss
     startTime = time.time()
     print(f"[{0:7d}] Loss: {loss:<13.10g}  S: {pop.scale:<12.7g}  I:{PI(pop.improvements)}  elapsed: {0.0:>9.6f} hours")
     try:
         #-----------------------------------------------------------------
         for trial in range(1, maxIterations):
-            pop.search(constrainToLower=constrainToLower, constrainToUpper=constrainToUpper)
+            pop.minimize(fun, constrainToLower=constrainToLower, constrainToUpper=constrainToUpper)
             if loss > pop.elite.loss:
                 loss = pop.elite.loss
                 elapsedTime = (time.time() - startTime)/(60*60)
